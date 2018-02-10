@@ -11,6 +11,22 @@
 ### GreenDaoCompatibleUpdateHelper
 A helper which can help you to update you database without lost your old datas, simple to use , enjoy.
 
+### Thanks
+<a href="https://stackoverflow.com/questions/13373170/greendao-schema-update-and-data-migration/30334668#30334668">Giant</a>
+
+### Principle & Optimization
+Principle：
+* A -> A + B , old: A , new: B
+* use (A+B) -> create temp (A'+B') & insert data
+* drop (A+B) , contain old datas
+* create (A+B) , abs empty tables
+* restore data to (A+B) from (A'+B') then drop (A'+B')
+
+Optimization：
+* add callback interface
+* add error msg log
+* fix some bug & format sql , like ``insert(name)`` => ``insert(`name`)`` which may cause some conflict。
+
 ### Usage
 
 * change the default ``DaoMaster.DevOpenHelper`` to ``MyGreenDaoDbHelper`` in the right place.
@@ -237,12 +253,17 @@ public class MyGreenDaoDbHelper extends DaoMaster.DevOpenHelper {
 ```
 
 ## 产品级别的可能错误
+
 * 因为混淆了 dao 类文件，导致 createTable 方法找不到，解决方法，不要混淆 dao 文件
 * restore 步骤中因为新加入的字段含有 int boolean 基础类型，因为不具备默认值而导致出现 ``SQLiteConstraintException: NOT NULL constraint failed`` 错误，解决方法，采用 Integer Boolean 类型替换，这个你只能妥协，因为 greenDao 作者不屑于在你建表的时候提供默认值方法。详情可以去看看 issue
 
 ## 你的顾虑
-* 如果我的表太多了，升级会不会造成 ANR 或者导致读写混乱？
 
-答： sqlLite 的源码里面调用 ``onUpdrade``方法的入口皆加上了``同步琐``，这样不会造成在升级中还能让你去读写的情况。
+* 如果我的表太多了，升级会不会造成 ANR 或者导致读写混乱？
+* 是否实践过？
+
+1, 答： sqlLite 的源码里面调用 ``onUpdrade``方法的入口皆加上了``同步琐``，这样不会造成在升级中还能让你去读写的情况。
 这点设计得非常优秀！表太多的，几百张？那么就放入子线程升级。
+
+2, 答： 我已经使用到线上多个APP ， 且成功运行至今。
 
